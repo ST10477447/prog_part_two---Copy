@@ -8,29 +8,28 @@ namespace prog_part_two.Controllers
     [ApiController]
     public class Login : ControllerBase
     {
-
         [HttpPost("login")]
-        public IActionResult Logins(string organiserName, string organiserEmail, string organiserPassword)
+        public IActionResult Logins(string organiserEmail, string organiserPassword)
         {
             // 1. Basic validation
-            if (string.IsNullOrWhiteSpace(organiserName) ||
-                string.IsNullOrWhiteSpace(organiserEmail) ||
+            if (string.IsNullOrWhiteSpace(organiserEmail) ||
+
                 !organiserEmail.Trim().EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrEmpty(organiserPassword) ||
                 organiserPassword.Length < 8)
             {
-                return Unauthorized(new { message = "Invalid Organiser name, email, or password." });
+                return Unauthorized(new { message = "Invalid Organiser email, or password." });
             }
 
             string connectionString = @"Data source=(localdb)\api_part_1;database=prog_part_ll;Integrated Security=True;TrustServerCertificate=True;";
-            string query = "SELECT OrganiserId, OrganiserName, Password FROM Organiser WHERE OrganiserName = @Name AND OrganiserEmail = @Email";
+            string query = "SELECT OrganiserId, Password FROM Organiser WHERE OrganiserEmail = @Email";
 
             try
             {
                 using SqlConnection connect = new SqlConnection(connectionString);
                 using SqlCommand cmd = new SqlCommand(query, connect);
 
-                cmd.Parameters.AddWithValue("@Name", organiserName);
+
                 cmd.Parameters.AddWithValue("@Email", organiserEmail);
 
                 connect.Open();
@@ -60,18 +59,19 @@ namespace prog_part_two.Controllers
         }
 
         [HttpPost("participant/login")]
-        public IActionResult ParticipantLogin(string participantName, string participantEmail, string participantPassword)
+        public IActionResult ParticipantLogin(string participantEmail, string participantPassword)
         {
             if (string.IsNullOrEmpty(participantEmail) ||
                 !participantEmail.ToLower().Contains("gmail.com") ||
                 string.IsNullOrEmpty(participantPassword) ||
-                participantPassword.Length <= 8)
+                participantPassword.Length < 6)
             {
-                return Unauthorized(new { message = "Invalid participant name or email or password." });
+                return Unauthorized(new { message = "Invalid participant email or password." });
             }
 
             string connectionString = @"Data source=(localdb)\api_part_1;database=prog_part_ll;";
-            string query = "SELECT ParticipantId, ParticipantName, ParticipantPasswordhash FROM Participant WHERE ParticipantName = @Name AND ParticipantEmail = @Email";
+            string query = "SELECT ParticipantId, ParticipantName, ParticipantPasswordhash FROM Participant WHERE ParticipantEmail = @Email";
+
 
             try
             {
@@ -79,8 +79,8 @@ namespace prog_part_two.Controllers
                 {
                     using (SqlCommand cmd = new SqlCommand(query, connect))
                     {
-                        cmd.Parameters.AddWithValue("@Name", participantName);
-                        cmd.Parameters.AddWithValue("@Email", participantEmail);
+
+                        cmd.Parameters.AddWithValue("@Email", participantEmail.Trim());
 
                         connect.Open();
                         using (SqlDataReader reader = cmd.ExecuteReader())

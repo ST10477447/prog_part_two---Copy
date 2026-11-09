@@ -37,7 +37,7 @@ namespace prog_part_two.Controllers
             ev.EventDescription = updated.EventDescription;
             ev.OrganiserId = updated.OrganiserId;
             ev.CategoryId = updated.CategoryId;
-            
+
 
             return NoContent();
         }
@@ -55,7 +55,7 @@ namespace prog_part_two.Controllers
               string EventDate, string EventLocation, string EventDescription,
               int OrganiserId, int CategoryId)
         {
-            
+
 
 
 
@@ -93,7 +93,7 @@ namespace prog_part_two.Controllers
                 cmd.Parameters.AddWithValue("@EventDescription", EventDescription);
                 cmd.Parameters.AddWithValue("@OrganiserId", OrganiserId);
                 cmd.Parameters.AddWithValue("@CategoryId", CategoryId);
-                
+
 
                 cmd.ExecuteNonQuery();
 
@@ -105,6 +105,52 @@ namespace prog_part_two.Controllers
             }
         }
 
+        [HttpPost("store-event")]
+        public async Task<IActionResult> StoreEvent([FromBody] prog_part_two.Models.Events model)
+        {
+            if (model == null) return BadRequest("Payload data was empty.");
+
+            try
+            {
+                string connection_string = @"Data source=(localdb)\api_part_1;database=prog_part_ll;";
+
+                using (SqlConnection connect = new SqlConnection(connection_string))
+                {
+                    await connect.OpenAsync();
+
+                    // 📝 SQL query matching your image structure line-for-line
+                    string query = @"INSERT INTO Events 
+                (EventName, EventType, Distance, EventDate, EventLocation, EventDescription, OrganiserId, ParticipantId, CategoryId) 
+                VALUES (@Name, @Type, @Distance, @Date, @Loc, @Desc, @OrgId, @PartId, @CatId)";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connect))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", model.EventName.Trim());
+                        cmd.Parameters.AddWithValue("@Type", model.EventType.Trim());
+                        cmd.Parameters.AddWithValue("@Distance", model.Distance.Trim());
+                        cmd.Parameters.AddWithValue("@Date", model.EventDate);
+                        cmd.Parameters.AddWithValue("@Loc", model.EventLocation.Trim());
+                        cmd.Parameters.AddWithValue("@Desc", model.EventDescription.Trim());
+
+                        // Handles database null checking for foreign keys cleanly
+                        cmd.Parameters.AddWithValue("@OrgId", (object)model.OrganiserId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@PartId", (object)model.ParticipantId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@CatId", (object)model.CategoryId ?? DBNull.Value);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+
+                    connect.Close();
+                }
+
+                return Ok("Event registered successfully in database!");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Database Error: {ex.Message}");
+            }
+        }
+
     }
-    }
+}
 

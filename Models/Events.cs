@@ -13,5 +13,6 @@
         //foreign keys
         public int OrganiserId { get; set; }
         public int CategoryId { get; set; }
+        public int ParticipantId { get; set; }
     }
 }
